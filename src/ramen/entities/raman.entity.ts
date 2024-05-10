@@ -14,6 +14,9 @@ export class Raman extends Document{
     name: string;
 
     @Prop()
+    description: string;
+
+    @Prop()
     price: number;
 
     @Prop({
@@ -23,8 +26,9 @@ export class Raman extends Document{
     })
     spice_level: number;
 
-    @Prop({ type: [String], default: [] })
-    ingredients: string[];
+    @Prop({default: false})
+    isDeleted: boolean;
+
 }
 
 export const RamenSchema = SchemaFactory.createForClass(Raman);

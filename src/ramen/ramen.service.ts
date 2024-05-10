@@ -1,25 +1,30 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateRamanDto } from './dto/create-raman.dto';
 import { UpdateRamanDto } from './dto/update-raman.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Raman } from './entities/raman.entity';
 import { Model } from 'mongoose';
+import { v4 as uuid } from 'uuid';
 
-interface Ramen {
+export interface Ramen {
   id: string;
   name: string;
+  description: string;
   price: number;
   spice_level: number;
-  ingredients: string[]
 }
 
 @Injectable()
 export class RamenService {
-
   constructor(
     @InjectModel(Raman.name)
-    private readonly ramenModel: Model<Raman>
-  ){}
+    private readonly ramenModel: Model<Raman>,
+  ) {}
 
   private handleExceptions(error: any) {
     if (error.code === 11000) {
@@ -27,44 +32,146 @@ export class RamenService {
         `Ramen already exists in db ${JSON.stringify(error.keyValue)}`,
       );
     }
+
+    if (error.status === 400) {
+      throw new BadRequestException(
+        error.response.message || 'Unexpected error, check server logs',
+      );
+    }
+
+    if (error.status === 404) {
+      throw new NotFoundException(
+        error.response.message || 'Unexpected error, check server logs',
+      );
+    }
     throw new InternalServerErrorException(
-      `Cant create Ramen - Check server logs`,
+      `Unexpected error, check server logs`,
     );
   }
 
   async create(createRamanDto: CreateRamanDto) {
     const newRamen: Ramen = {
-      id: "1",
+      id: uuid(),
       name: createRamanDto.name,
+      description: createRamanDto.description,
       price: createRamanDto.price,
       spice_level: createRamanDto.spice_level,
-      ingredients: createRamanDto.ingredients.length > 0 ? createRamanDto.ingredients : []
-    }
+    };
     try {
       const savedRamen = await this.ramenModel.create(newRamen);
 
       return {
         statusCode: 201,
-        msg: "The ramen have been saved it !"
+        msg: 'The ramen have been saved it !',
       };
     } catch (error) {
-      throw new BadRequestException(error);
+      console.log(error);
+      this.handleExceptions(error);
     }
   }
 
-  findAll() {
-    return `This action returns all ramen`;
+  async findAll() {
+    let ramens: Ramen[] = [];
+    try {
+      const dbRamens = await this.ramenModel.find({ isDeleted: false });
+
+      dbRamens.forEach((dbRamen) => {
+        const ramen: Ramen = {
+          id: dbRamen.id,
+          name: dbRamen.name,
+          description: dbRamen.description,
+          price: dbRamen.price,
+          spice_level: dbRamen.spice_level,
+        };
+        ramens.push(ramen)
+      });
+
+      return {
+        statusCode: 200,
+        data: { ramens },
+      };
+    } catch (error) {
+      console.log(error);
+      this.handleExceptions(error);
+    }
   }
 
-  findOne(id: string) {
-    return `This action returns a #${id} raman`;
+  async findOne(id: string) {
+    let ramen: Ramen;
+    try {
+      const dbRamen = await this.ramenModel.findOne({
+        id: id,
+        isDeleted: false,
+      });
+      if (!dbRamen) {
+        throw new NotFoundException(
+          `The ramen with the id: ${id}, does not exist.`,
+        );
+      }
+      ramen = {
+        id: id,
+        name: dbRamen.name,
+        description: dbRamen.description,
+        price: dbRamen.price,
+        spice_level: dbRamen.spice_level,
+      };
+      return {
+        statusCode: 200,
+        data: { ramen },
+      };
+    } catch (error) {
+      console.log(error);
+      this.handleExceptions(error);
+    }
   }
 
-  update(id: string, updateRamanDto: UpdateRamanDto) {
-    return `This action updates a #${id} raman`;
+  async update(id: string, updateRamanDto: UpdateRamanDto) {
+    try {
+      const dbRamen = await this.ramenModel.findOne({
+        id: id,
+        isDeleted: false,
+      });
+
+      if (!dbRamen)
+        throw new NotFoundException(
+          `The ramen with the id: ${id}, does not exist.`,
+        );
+
+      await dbRamen.updateOne(updateRamanDto);
+
+      return {
+        statusCode: 200,
+        msg: 'The ramen have been update it !',
+      };
+    } catch (error) {
+      console.log(error);
+      this.handleExceptions(error);
+    }
   }
 
-  remove(id: string) {
-    return `This action removes a #${id} raman`;
+  async remove(id: string) {
+    try {
+      const dbRamen = await this.ramenModel.findOne({
+        id: id,
+        isDeleted: false,
+      });
+
+      if (!dbRamen)
+        throw new NotFoundException(
+          `The ramen with the id: ${id}, does not exist.`,
+        );
+
+      dbRamen.isDeleted = true;
+
+      await dbRamen.updateOne(dbRamen);
+
+      return {
+        statusCode: 200,
+        msg: 'The ramen have been delete it !',
+      };
+    } catch (error) {
+      console.log(error);
+      this.handleExceptions(error);
+    }
   }
 }

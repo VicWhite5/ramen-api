@@ -7,6 +7,10 @@ export class CreateRamanDto {
     @MinLength(3)
     name: string;
 
+    @IsString()
+    @MinLength(3)
+    description: string;
+
     @IsInt()
     @IsPositive()
     @Min(1)
@@ -15,10 +19,4 @@ export class CreateRamanDto {
     @IsInt()
     @IsIn([1, 2 ,3 ,4 , 5])
     spice_level: number;
-
-    // @IsArray()
-    // @ValidateNested({each: true})
-    // @Type(() => String)
-    @IsArray()
-    ingredients: string[]
 }

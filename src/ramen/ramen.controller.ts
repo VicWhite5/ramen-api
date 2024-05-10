@@ -8,27 +8,27 @@ export class RamenController {
   constructor(private readonly ramenService: RamenService) {}
 
   @Post()
-  create(@Body() createRamanDto: CreateRamanDto) {
+  async create(@Body() createRamanDto: CreateRamanDto) {
     return this.ramenService.create(createRamanDto);
   }
 
   @Get()
-  findAll() {
+  async findAll() {
     return this.ramenService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.ramenService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() updateRamanDto: UpdateRamanDto) {
+  async update(@Param('id', ParseUUIDPipe) id: string, @Body() updateRamanDto: UpdateRamanDto) {
     return this.ramenService.update(id, updateRamanDto);
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseUUIDPipe) id: string) {
+  async remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.ramenService.remove(id);
   }
 }
