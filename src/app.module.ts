@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { RamenModule } from './ramen/ramen.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
+import { AuditModule } from './audit/audit.module';
 
 @Module({
   imports: [
@@ -13,6 +14,8 @@ import { ConfigModule } from '@nestjs/config';
     ),
 
     RamenModule,
+
+    AuditModule,
   ],
   controllers: [],
   providers: [],

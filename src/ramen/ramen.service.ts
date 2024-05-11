@@ -10,6 +10,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Raman } from './entities/raman.entity';
 import { Model } from 'mongoose';
 import { v4 as uuid } from 'uuid';
+import { AuditService } from 'src/audit/audit.service';
 
 export interface Ramen {
   id: string;
@@ -24,6 +25,8 @@ export class RamenService {
   constructor(
     @InjectModel(Raman.name)
     private readonly ramenModel: Model<Raman>,
+
+    private readonly auditService: AuditService
   ) {}
 
   private handleExceptions(error: any) {
@@ -50,6 +53,8 @@ export class RamenService {
   }
 
   async create(createRamanDto: CreateRamanDto) {
+    const action: string = "Create Ramen";
+
     const newRamen: Ramen = {
       id: uuid(),
       name: createRamanDto.name,
@@ -60,17 +65,22 @@ export class RamenService {
     try {
       const savedRamen = await this.ramenModel.create(newRamen);
 
+      await this.auditService.saveAudit(action, true);
+
       return {
         statusCode: 201,
         msg: 'The ramen have been saved it !',
       };
     } catch (error) {
+      await this.auditService.saveAudit(action, false);
+
       console.log(error);
       this.handleExceptions(error);
     }
   }
 
   async findAll() {
+    const action: string = "Find All Ramens"
     let ramens: Ramen[] = [];
     try {
       const dbRamens = await this.ramenModel.find({ isDeleted: false });
@@ -86,17 +96,21 @@ export class RamenService {
         ramens.push(ramen)
       });
 
+      await this.auditService.saveAudit(action, true);
       return {
         statusCode: 200,
         data: { ramens },
       };
     } catch (error) {
+      await this.auditService.saveAudit(action, false);
+
       console.log(error);
       this.handleExceptions(error);
     }
   }
 
   async findOne(id: string) {
+    const action: string = "Find One Ramen"
     let ramen: Ramen;
     try {
       const dbRamen = await this.ramenModel.findOne({
@@ -115,17 +129,23 @@ export class RamenService {
         price: dbRamen.price,
         spice_level: dbRamen.spice_level,
       };
+
+      await this.auditService.saveAudit(action, true);
+
       return {
         statusCode: 200,
         data: { ramen },
       };
     } catch (error) {
+      await this.auditService.saveAudit(action, false);
+
       console.log(error);
       this.handleExceptions(error);
     }
   }
 
   async update(id: string, updateRamanDto: UpdateRamanDto) {
+    const action: string = "Update Ramen";
     try {
       const dbRamen = await this.ramenModel.findOne({
         id: id,
@@ -138,18 +158,23 @@ export class RamenService {
         );
 
       await dbRamen.updateOne(updateRamanDto);
+      
+      await this.auditService.saveAudit(action, true);
 
       return {
         statusCode: 200,
         msg: 'The ramen have been update it !',
       };
     } catch (error) {
+      await this.auditService.saveAudit(action, false);
+
       console.log(error);
       this.handleExceptions(error);
     }
   }
 
   async remove(id: string) {
+    const action: string = "Remove Ramen"
     try {
       const dbRamen = await this.ramenModel.findOne({
         id: id,
@@ -164,12 +189,16 @@ export class RamenService {
       dbRamen.isDeleted = true;
 
       await dbRamen.updateOne(dbRamen);
+      
+      await this.auditService.saveAudit(action, true);
 
       return {
         statusCode: 200,
         msg: 'The ramen have been delete it !',
       };
     } catch (error) {
+      await this.auditService.saveAudit(action, false);
+
       console.log(error);
       this.handleExceptions(error);
     }
