@@ -10,7 +10,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Raman } from './entities/raman.entity';
 import { Model } from 'mongoose';
 import { v4 as uuid } from 'uuid';
-import { AuditService } from 'src/audit/audit.service';
+import { AuditService } from '../audit/audit.service';
 
 export interface Ramen {
   id: string;
